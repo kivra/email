@@ -20,6 +20,10 @@ You have to start the email app with `application:start(email)`. Then you can us
      {<<"id">>,
       <<"<20120425121632.29113.10857@samples.mailgun.org>">>}]}
 
+## Configure
+To configure edit app.config to your liking.
+
+
 Happy emailing!
 
 xoxo // Kivra
