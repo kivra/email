@@ -6,8 +6,8 @@
 -export([send/5]).
 
 -record(state, {
-        apiurl,
-        apikey
+		apiurl :: string(),
+		apikey :: string()
         }).
 
 
