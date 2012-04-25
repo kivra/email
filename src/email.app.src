@@ -1,0 +1,12 @@
+{application, email,
+ [
+  {description, "Erlang email app"},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { email_app, []}},
+  {env, []}
+ ]}.
