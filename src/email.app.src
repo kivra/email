@@ -2,7 +2,12 @@
  [
   {description, "Erlang email app"},
   {vsn, "1"},
-  {registered, []},
+  {modules, [email_adapter,
+             email_app,
+             email_controller,
+             email,
+             email_sup]},
+  {registered, [email_app]},
   {applications, [
                   kernel,
                   stdlib
