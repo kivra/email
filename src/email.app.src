@@ -1,7 +1,7 @@
 {application, email,
  [
   {description, "Erlang email app"},
-  {vsn, "1"},
+  {vsn, git},
   {modules, [email_adapter,
              email_app,
              email_controller,
