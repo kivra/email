@@ -6,8 +6,8 @@
 -export([send/5]).
 
 -record(state, {
-		apiurl :: string(),
-		apikey :: string()
+        apiurl :: string(),
+        apikey :: string()
         }).
 
 
@@ -32,13 +32,13 @@ stop(_Conn) ->
 
 send(Conn, {ToName, ToEmail}, {FromName, FromEmail}, Subject, Message) ->
     Auth = auth_header("api", Conn#state.apikey),
-    To = ToName++" <"++ToEmail++">",
-    From = FromName++" <"++FromEmail++">",
+    To = <<ToName/binary, " <", ToEmail/binary, ">">>,
+    From = <<FromName/binary, " <", FromEmail/binary, ">">>,
     Url = restc:construct_url(Conn#state.apiurl, "messages", []),
-    Body = [{to, To},
-            {from, From},
-            {text, Message},
-            {subject, Subject}],
+    Body = [{<<"to">>, To},
+            {<<"from">>, From},
+            {<<"text">>, Message},
+            {<<"subject">>, Subject}],
 
     case restc:request(post, percent, Url, [200], Auth, Body) of
         {ok, _, _, Payload} ->
@@ -50,7 +50,7 @@ send(Conn, {ToName, ToEmail}, {FromName, FromEmail}, Subject, Message) ->
     end.
 
 
-%%% API ========================================================================
+%%% Private ========================================================================
 
 
 get_apiurl(Domain, Url) ->
