@@ -2,7 +2,7 @@
 %%
 %% email: Erlang mail application
 %%
-%% Copyright (c) 2012 KIVRA
+%% Copyright (c) 2012-2013 KIVRA
 %%
 %% Permission is hereby granted, free of charge, to any person obtaining a
 %% copy of this software and associated documentation files (the "Software"),
@@ -27,12 +27,8 @@
 {application, email,
  [
   {description, "Erlang email app"},
-  {vsn, git},
-  {modules, [email_adapter,
-             email_app,
-             email_controller,
-             email,
-             email_sup]},
+  {vsn, "0.1.0"},
+  {modules, []},
   {registered, [email_app]},
   {applications, [
                   kernel,

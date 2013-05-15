@@ -28,25 +28,36 @@
 
 -export([send/4]).
 
+-type email()           :: {binary(), binary()}.
+-type dirtyemailprim()  :: atom() | list() | binary().
+-type dirtyemail()      :: {dirtyemailprim(), dirtyemailprim()}.
+-type maybedirtyemail() :: email() | dirtyemail() | dirtyemailprim().
+
+-export_type([email/0]).
+
 
 %%% API ========================================================================
 
 
--spec send(To :: binary(), From ::binary(), Subject :: binary(), Message :: binary()) -> ok.
+%% @doc Sends an email and returns ok or error depending on the outcome
+-spec send(maybedirtyemail(), maybedirtyemail(), binary(), binary()) ->
+            {ok, term()} | {error, term()}.
 send(To, From, Subject, Message) ->
-    SendTo = check_param(To),
-    SendFrom = check_param(From),
-    gen_server:call(email_controller,
-                    {send, SendTo, SendFrom
-                     ,ensure_binary(Subject), ensure_binary(Message)}).
+    gen_server:call(email_controller, { send
+                                      , sanitize_param(To)
+                                      , sanitize_param(From)
+                                      , ensure_binary(Subject)
+                                      , ensure_binary(Message)}
+                    , infinity).
 
 
 %%% Private ========================================================================
 
 
-check_param({V1, V2}) ->
+-spec sanitize_param(maybedirtyemail()) -> email().
+sanitize_param({V1, V2}) ->
     {ensure_binary(V1), ensure_binary(V2)};
-check_param(Val) ->
+sanitize_param(Val) ->
     Val2 = ensure_binary(Val),
     {Val2, Val2}.
 

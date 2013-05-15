@@ -2,7 +2,7 @@
 %%
 %% email: Erlang mail application
 %%
-%% Copyright (c) 2012 KIVRA
+%% Copyright (c) 2012-2013 KIVRA
 %%
 %% Permission is hereby granted, free of charge, to any person obtaining a
 %% copy of this software and associated documentation files (the "Software"),
@@ -29,7 +29,12 @@
 -behaviour(gen_server).
 
 -export([start_link/0]).
--export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
+-export([init/1]).
+-export([handle_call/3]).
+-export([handle_cast/2]).
+-export([handle_info/2]).
+-export([terminate/2]).
+-export([code_change/3]).
 
 -record(state, {
         adapter    :: atom(),
