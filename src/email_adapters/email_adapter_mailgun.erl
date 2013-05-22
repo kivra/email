@@ -32,6 +32,7 @@
 -export([start/1]).
 -export([stop/1]).
 -export([send/5]).
+-export([url_encode/1]).
 
 -record(state, {
         apiurl :: string(),
@@ -85,39 +86,34 @@ auth_header(User, Password) ->
     [{ "Authorization"
      , "Basic "++base64:encode_to_string(lists:append([User,":",Password])) }].
 
-url_encode(Data)    -> url_encode(Data,"").
+url_encode(Data)    -> url_encode(Data, <<"">>).
 
 url_encode([], Acc) -> Acc;
-url_encode([{Key, Value} | T], "") ->
-    url_encode(T, escape_uri(Key)++"="++escape_uri(Value));
+url_encode([{Key, Value} | T], <<"">>) ->
+    url_encode(T, << (escape_uri(Key))/binary
+                   , $=, (escape_uri(Value))/binary >>);
 url_encode([{Key, Value} | T], Acc) ->
-    url_encode(T, Acc++"&"++escape_uri(Key)++"="++escape_uri(Value)).
+    url_encode(T, << Acc/binary, $&, (escape_uri(Key))/binary
+                   , $=, (escape_uri(Value))/binary >>).
 
 escape_uri(S) when is_list(S) ->
-    escape_uri(unicode:characters_to_binary(S));
-escape_uri(<<C:8, Cs/binary>>) when C >= $a, C =< $z ->
-    [C] ++ escape_uri(Cs);
-escape_uri(<<C:8, Cs/binary>>) when C >= $A, C =< $Z ->
-    [C] ++ escape_uri(Cs);
-escape_uri(<<C:8, Cs/binary>>) when C >= $0, C =< $9 ->
-    [C] ++ escape_uri(Cs);
-escape_uri(<<C:8, Cs/binary>>) when C == $. ->
-    [C] ++ escape_uri(Cs);
-escape_uri(<<C:8, Cs/binary>>) when C == $- ->
-    [C] ++ escape_uri(Cs);
-escape_uri(<<C:8, Cs/binary>>) when C == $_ ->
-    [C] ++ escape_uri(Cs);
-escape_uri(<<C:8, Cs/binary>>) ->
-    escape_byte(C) ++ escape_uri(Cs);
-escape_uri(<<>>) ->
-    "".
+    escape_uri(unicode:characters_to_binary(S), <<>>);
+escape_uri(B) ->
+    escape_uri(B, <<>>).
 
-escape_byte(C) ->
-    "%" ++ hex_octet(C).
+escape_uri(<<C, Rest/binary>>, Acc) ->
+    if  C >= $0, C =< $9 -> escape_uri(Rest, <<Acc/binary, C>>);
+        C >= $A, C =< $Z -> escape_uri(Rest, <<Acc/binary, C>>);
+        C >= $a, C =< $z -> escape_uri(Rest, <<Acc/binary, C>>);
+        C =:= $          -> escape_uri(Rest, <<Acc/binary, $+>>);
+        C =:= $.; C =:= $-; C =:= $~; C =:= $_ ->
+            escape_uri(Rest, <<Acc/binary, C>>);
+        true ->
+            H = C band 16#F0 bsr 4, L = C band 16#0F,
+            escape_uri(Rest, <<Acc/binary, $%, (tohexl(H)), (tohexl(L))>>)
+    end;
+escape_uri(<<>>, Acc) ->
+    Acc.
 
-hex_octet(N) when N =< 9 ->
-    [$0 + N];
-hex_octet(N) when N > 15 ->
-    hex_octet(N bsr 4) ++ hex_octet(N band 15);
-hex_octet(N) ->
-    [N - 10 + $a].
+tohexl(C) when C < 10 -> $0 + C;
+tohexl(C) when C < 17 -> $a + C - 10.
