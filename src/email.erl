@@ -29,25 +29,27 @@
 -export([send/4]).
 
 -type email()           :: {binary(), binary()}.
+-type message()         :: binary() | {html, binary()} | {text, binary()}.
 -type dirtyemailprim()  :: atom() | list() | binary().
 -type dirtyemail()      :: {dirtyemailprim(), dirtyemailprim()}.
 -type maybedirtyemail() :: email() | dirtyemail() | dirtyemailprim().
 
 -export_type([email/0]).
+-export_type([message/0]).
 
 
 %%% API ========================================================================
 
 
 %% @doc Sends an email and returns ok or error depending on the outcome
--spec send(maybedirtyemail(), maybedirtyemail(), binary(), binary()) ->
+-spec send(maybedirtyemail(), maybedirtyemail(), binary(), message()) ->
             {ok, term()} | {error, term()}.
 send(To, From, Subject, Message) ->
     gen_server:call(email_controller, { send
                                       , sanitize_param(To)
                                       , sanitize_param(From)
                                       , ensure_binary(Subject)
-                                      , ensure_binary(Message)}
+                                      , sanitize_message(Message)}
                     , infinity).
 
 
@@ -60,6 +62,13 @@ sanitize_param({V1, V2}) ->
 sanitize_param(Val) ->
     Val2 = ensure_binary(Val),
     {Val2, Val2}.
+
+sanitize_message({html, Msg}) ->
+    {html, ensure_binary(Msg)};
+sanitize_message({text, Msg}) ->
+    {text, ensure_binary(Msg)};
+sanitize_message(Msg) ->
+    ensure_binary(Msg).
 
 ensure_binary(B) when is_binary(B) ->
     B;

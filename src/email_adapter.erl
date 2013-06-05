@@ -38,5 +38,5 @@
       To         :: email:email(),
       From       :: email:email(),
       Subject    :: binary(),
-      Message    :: binary(),
+      Message    :: email:message(),
       Return     :: term().

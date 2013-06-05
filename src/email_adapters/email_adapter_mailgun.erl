@@ -60,12 +60,12 @@ stop(_Conn) ->
     ok.
 
 send(Conn, {ToName, ToEmail}, {FromName, FromEmail}, Subject, Message) ->
-    Body = [{<<"to">>, <<ToName/binary, " <", ToEmail/binary, ">">>},
-            {<<"from">>, <<FromName/binary, " <", FromEmail/binary, ">">>},
-            {<<"html">>, Message},
-            {<<"subject">>, Subject}],
+    Body0 = [{<<"to">>, <<ToName/binary, " <", ToEmail/binary, ">">>},
+             {<<"from">>, <<FromName/binary, " <", FromEmail/binary, ">">>},
+             {<<"subject">>, Subject}],
+    Body1 = add_message(Body0, Message),
 
-    case httpc:request( post, construct_request(Conn, Body)
+    case httpc:request( post, construct_request(Conn, Body1)
                       , [], [{body_format, binary}] ) of
         {ok, {{_, 200, _}, _, Payload}} -> {ok, Payload};
         {ok, {{_, _, _}, _, Payload}}   -> {error, Payload};
@@ -75,6 +75,13 @@ send(Conn, {ToName, ToEmail}, {FromName, FromEmail}, Subject, Message) ->
 
 %%% Private ========================================================================
 
+
+add_message(Body, {html, Message}) ->
+    [{<<"html">>, Message} | Body];
+add_message(Body, {text, Message}) ->
+    [{<<"text">>, Message} | Body];
+add_message(Body, Message) ->
+    add_message(Body, {text, Message}).
 
 construct_request(Conn, Body) ->
     { Conn#state.apiurl++"/"++"messages"
