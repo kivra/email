@@ -27,7 +27,7 @@
 {application, email,
  [
   {description, "Erlang email app"},
-  {vsn, "0.1.0"},
+  {vsn, "0.1.1"},
   {modules, []},
   {registered, [email_app]},
   {applications, [

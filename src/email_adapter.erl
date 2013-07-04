@@ -32,11 +32,12 @@
 
 -callback stop(Connection :: any()) -> ok.
 
--callback send(Connection, To, From, Subject, Message) -> {ok, Return}
+-callback send(Connection, To, From, Subject, Message, Options) -> {ok, Return}
                                                         | {error, Return} when
       Connection :: any(),
       To         :: email:email(),
       From       :: email:email(),
       Subject    :: binary(),
       Message    :: email:message(),
+      Options    :: any(),
       Return     :: term().

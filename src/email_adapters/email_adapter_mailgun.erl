@@ -31,7 +31,7 @@
 -export([start/0]).
 -export([start/1]).
 -export([stop/1]).
--export([send/5]).
+-export([send/6]).
 -export([url_encode/1]).
 
 -record(state, {
@@ -59,11 +59,11 @@ start(Options) ->
 stop(_Conn) ->
     ok.
 
-send(Conn, {ToName, ToEmail}, {FromName, FromEmail}, Subject, Message) ->
+send(Conn, {ToName, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt) ->
     Body0 = [{<<"to">>, <<ToName/binary, " <", ToEmail/binary, ">">>},
              {<<"from">>, <<FromName/binary, " <", FromEmail/binary, ">">>},
              {<<"subject">>, Subject}],
-    Body1 = add_message(Body0, Message),
+    Body1 = add_message(lists:merge(Opt, Body0), Message),
 
     case httpc:request( post, construct_request(Conn, Body1)
                       , [], [{body_format, binary}] ) of

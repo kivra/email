@@ -27,6 +27,7 @@
 -module(email).
 
 -export([send/4]).
+-export([send/5]).
 
 -type email()           :: {binary(), binary()}.
 -type message()         :: binary() | {html, binary()} | {text, binary()}.
@@ -45,11 +46,18 @@
 -spec send(maybedirtyemail(), maybedirtyemail(), binary(), message()) ->
             {ok, term()} | {error, term()}.
 send(To, From, Subject, Message) ->
+    send(To, From, Subject, Message, []).
+
+%% @doc Sends an email and returns ok or error depending on the outcome
+-spec send(maybedirtyemail(), maybedirtyemail(), binary(), message(), any()) ->
+            {ok, term()} | {error, term()}.
+send(To, From, Subject, Message, Options) ->
     gen_server:call(email_controller, { send
                                       , sanitize_param(To)
                                       , sanitize_param(From)
                                       , ensure_binary(Subject)
-                                      , sanitize_message(Message)}
+                                      , sanitize_message(Message)
+                                      , Options }
                     , infinity).
 
 

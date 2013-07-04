@@ -57,10 +57,10 @@ init([]) ->
     {ok, Conn} = Adapter:start(AdapterOptions),
     {ok, #state{ adapter = Adapter, connection = Conn }}.
 
-handle_call({send, To, From, Subject, Message}, _From, State) ->
+handle_call({send, To, From, Subject, Message, Options}, _From, State) ->
     Adapter = State#state.adapter,
     Conn = State#state.connection,
-    {reply, Adapter:send(Conn, To, From, Subject, Message), State}.
+    {reply, Adapter:send(Conn, To, From, Subject, Message, Options), State}.
 
 handle_cast(_Request, State) ->
     {noreply, State}.
