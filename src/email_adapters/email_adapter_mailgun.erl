@@ -59,6 +59,10 @@ start(Options) ->
 stop(_Conn) ->
     ok.
 
+send(Conn, {ToEmail, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt) ->
+    send(Conn, {<<>>, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt);
+send(Conn, {ToName, ToEmail}, {FromEmail, FromEmail}, Subject, Message, Opt) ->
+    send(Conn, {ToName, ToEmail}, {<<>>, FromEmail}, Subject, Message, Opt);
 send(Conn, {ToName, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt) ->
     Body0 = [{<<"to">>, <<ToName/binary, " <", ToEmail/binary, ">">>},
              {<<"from">>, <<FromName/binary, " <", FromEmail/binary, ">">>},
