@@ -4,6 +4,9 @@ email
 Erlang Mail application. Support pluggable backends. Comes default with a mailgun-adapter but adding new adapters is real simple.
 
 ## Using
+
+### In Erlang
+
 Include email as a rebar dependency with:
 
 ``` erlang
@@ -26,7 +29,20 @@ You have to start the email app with `application:start(email)`. Then you can us
       <<"<20120425121632.29113.10857@samples.mailgun.org>">>}]}
 ```
 
+### In Elixir
+
+Add email as a dependency in your `mix.exs` file.
+
+```elixir
+defp deps do
+  [ { :email, github: "kivra/email" } ]
+end
+```
+
+After you are done, run `mix deps.get` in your shell to fetch and compile the dependencies.
+
 ## Configure
+
 The following example demonstrates a basic app.config section for email
 using mailgun.
 
@@ -42,6 +58,15 @@ using mailgun.
         ]}
 ].
 ```
+
+### In Elixir
+
+Create or update your application configuration file (i.e.: `app.config`) with the configuration
+snippet above, and make sure to run `iex` or `mix` with the `erl` `--config` option:
+
+* `iex --erl "-config app.config" -S mix`
+or
+* `ELIXIR_ERL_OPTS="-config app.config" mix test`
 
 Happy emailing!
 
