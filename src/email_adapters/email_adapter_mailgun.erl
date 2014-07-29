@@ -69,18 +69,17 @@ send(Conn, {ToName, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt) ->
              {<<"subject">>, Subject}],
     Body1 = add_message(lists:merge(Opt, Body0), Message),
 
-    case httpc:request( post, construct_request(Conn, Body1)
+    try httpc:request( post, construct_request(Conn, Body1)
                       , [{timeout, 120000}]
                       , [{body_format, binary}] ) of
         {ok, {{_, 200, _}, _, Payload}} -> {ok, Payload};
         {ok, {{_, _, _}, _, Payload}}   -> {error, Payload};
         Error                           -> Error
+    catch
+        exit:{timeout, _} -> {error, timeout}
     end.
 
-
 %%% Private ========================================================================
-
-
 add_message(Body, {html, Message}) ->
     [{<<"html">>, Message} | Body];
 add_message(Body, {text, Message}) ->
