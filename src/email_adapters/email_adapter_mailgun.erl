@@ -1,51 +1,49 @@
-%% ----------------------------------------------------------------------------
-%%
-%% email: Erlang mail application
-%%
-%% Copyright (c) 2012-2013 KIVRA
-%%
-%% Permission is hereby granted, free of charge, to any person obtaining a
-%% copy of this software and associated documentation files (the "Software"),
-%% to deal in the Software without restriction, including without limitation
-%% the rights to use, copy, modify, merge, publish, distribute, sublicense,
-%% and/or sell copies of the Software, and to permit persons to whom the
-%% Software is furnished to do so, subject to the following conditions:
-%%
-%% The above copyright notice and this permission notice shall be included in
-%% all copies or substantial portions of the Software.
-%%
-%% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-%% IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-%% FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-%% AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-%% LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-%% FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-%% DEALINGS IN THE SOFTWARE.
-%%
-%% ----------------------------------------------------------------------------
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Copyright (c) 2012-2014 Kivra
+%%%
+%%% Permission to use, copy, modify, and/or distribute this software for any
+%%% purpose with or without fee is hereby granted, provided that the above
+%%% copyright notice and this permission notice appear in all copies.
+%%%
+%%% THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+%%% WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+%%% MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+%%% ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+%%% WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+%%% ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+%%% OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+%%%
+%%% @doc Email Mailgun Adapter
+%%% @end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%%_* Module declaration ===============================================
 -module(email_adapter_mailgun).
-
 -behaviour(email_adapter).
 
+%%%_* Exports ==========================================================
+%%%_ * API -------------------------------------------------------------
 -export([start/0]).
 -export([start/1]).
 -export([stop/1]).
 -export([send/6]).
 -export([url_encode/1]).
 
+%%%_ * Types -----------------------------------------------------------
 -record(state, {
         apiurl :: string(),
         apikey :: string()
         }).
 
+%%%_* Macros ===========================================================
+-define(http_options, [ {timeout,         120000}
+                      , {connect_timeout, 10000}
+                      , {version,         "HTTP/1.0"} ]).
+-define(options, [{body_format, binary}, {full_result, false}]).
 
-%%% API ========================================================================
-
-
-start() ->
-    start([]).
-
+%%%_* Code =============================================================
+%%%_ * API -------------------------------------------------------------
+start()        -> start([]).
 start(Options) ->
     application:start(inets),
     application:start(crypto),
@@ -56,36 +54,31 @@ start(Options) ->
     ApiKey = proplists:get_value(apikey, Options),
     {ok, #state{apiurl=ApiUrl++"/"++Domain, apikey=ApiKey}}.
 
-stop(_Conn) ->
-    ok.
+stop(_Conn)    -> ok.
 
 send(Conn, {ToEmail, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt) ->
     send(Conn, {<<>>, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt);
 send(Conn, {ToName, ToEmail}, {FromEmail, FromEmail}, Subject, Message, Opt) ->
     send(Conn, {ToName, ToEmail}, {<<>>, FromEmail}, Subject, Message, Opt);
 send(Conn, {ToName, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt) ->
-    Body0 = [{<<"to">>, <<ToName/binary, " <", ToEmail/binary, ">">>},
-             {<<"from">>, <<FromName/binary, " <", FromEmail/binary, ">">>},
-             {<<"subject">>, Subject}],
-    Body1 = add_message(lists:merge(Opt, Body0), Message),
+    Body0 = [ {<<"to">>,      <<ToName/binary, $<, ToEmail/binary, $>>>}
+            , {<<"from">>,    <<FromName/binary, $<, FromEmail/binary, $>>>}
+            , {<<"subject">>, Subject} ],
+    Req   = construct_request(Conn, add_message( lists:merge(Opt, Body0)
+                                               , Message )),
 
-    try httpc:request( post, construct_request(Conn, Body1)
-                      , [{timeout, 120000}]
-                      , [{body_format, binary}] ) of
-        {ok, {{_, 200, _}, _, Payload}} -> {ok, Payload};
-        {ok, {{_, _, _}, _, Payload}}   -> {error, Payload};
-        Error                           -> Error
+    try httpc:request(post, Req, ?http_options, ?options) of
+        {ok, {200, Payload}} -> {ok, Payload};
+        {ok, {_, Payload}}   -> {error, Payload};
+        Error                -> Error
     catch
         exit:{timeout, _} -> {error, timeout}
     end.
 
-%%% Private ========================================================================
-add_message(Body, {html, Message}) ->
-    [{<<"html">>, Message} | Body];
-add_message(Body, {text, Message}) ->
-    [{<<"text">>, Message} | Body];
-add_message(Body, Message) ->
-    add_message(Body, {text, Message}).
+%%%_* Private functions ================================================
+add_message(Body, {html, Message}) -> [{<<"html">>, Message} | Body];
+add_message(Body, {text, Message}) -> [{<<"text">>, Message} | Body];
+add_message(Body, Message)         -> add_message(Body, {text, Message}).
 
 construct_request(Conn, Body) ->
     { Conn#state.apiurl++"/"++"messages"
@@ -128,3 +121,15 @@ escape_uri(<<>>, Acc) ->
 
 tohexl(C) when C < 10 -> $0 + C;
 tohexl(C) when C < 17 -> $a + C - 10.
+
+%%%_* Tests ============================================================
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+
+-endif.
+
+%%%_* Emacs ============================================================
+%%% Local Variables:
+%%% allout-layout: t
+%%% erlang-indent-level: 4
+%%% End:
