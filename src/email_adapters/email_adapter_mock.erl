@@ -13,31 +13,35 @@
 %%% ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 %%% OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 %%%
-%%% @doc Email App
+%%% @doc Email Mock Adapter
 %%% @end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%_* Module declaration ===============================================
--module(email_app).
--behaviour(application).
+-module(email_adapter_mock).
+-behaviour(email_adapter).
 
 %%%_* Exports ==========================================================
 %%%_ * API -------------------------------------------------------------
--export([start/2, stop/1]).
+-export([start/0]).
+-export([start/1]).
+-export([stop/1]).
+-export([send/6]).
 
 %%%_* Code =============================================================
 %%%_ * API -------------------------------------------------------------
-start(_StartType, _StartArgs) -> email_sup:start_link().
-stop(_State)                  -> ok.
+start()         -> start([]).
+start(_Options) -> {ok, []}.
+stop(_)         -> ok.
+
+send(_, {ToName, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt) ->
+    io:format("(~p, ~p)-(~p, ~p)~n~p~n~p~n~p"
+             , [ToName, ToEmail, FromName, FromEmail, Subject, Message, Opt]),
+    {ok, mock}.
 
 %%%_* Tests ============================================================
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
-
-start_stop_test() ->
-    ok      = application:start(email),
-    {ok, _} = email:send("e@mail.com", "dev@null.com", "Subj", "Mess"),
-    ok      = application:stop(email).
 
 -endif.
 

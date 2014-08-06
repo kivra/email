@@ -25,5 +25,6 @@
                      , stdlib
                      ]}
     , {env,          []}
+    , {mod,          {email_app, []}}
     , {modules,      []}
  ]}.
