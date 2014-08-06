@@ -13,33 +13,36 @@
 %%% ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 %%% OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 %%%
-%%% @doc Email Adapter behavior
+%%% @doc Email Mock Adapter
 %%% @end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%_* Module declaration ===============================================
--module(email_adapter).
+-module(email_adapter_mock).
+-behaviour(email_adapter).
 
-%%%_* Behaviour ========================================================
--callback start() -> ok.
+%%%_* Exports ==========================================================
+%%%_ * API -------------------------------------------------------------
+-export([start/0]).
+-export([start/1]).
+-export([stop/1]).
+-export([send/6]).
 
--callback start(Options :: proplists:proplist()) -> ok.
+%%%_* Code =============================================================
+%%%_ * API -------------------------------------------------------------
+start()         -> start([]).
+start(_Options) -> {ok, []}.
+stop(_)         -> ok.
 
--callback stop(Connection :: any()) -> ok.
-
--callback send(Connection, To, From, Subject, Message, Options) -> {ok, Return}
-                                                        | {error, Return} when
-      Connection :: any(),
-      To         :: email:email(),
-      From       :: email:email(),
-      Subject    :: binary(),
-      Message    :: email:message(),
-      Options    :: any(),
-      Return     :: term().
+send(_, {ToName, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt) ->
+    io:format("(~p, ~p)-(~p, ~p)~n~p~n~p~n~p"
+             , [ToName, ToEmail, FromName, FromEmail, Subject, Message, Opt]),
+    {ok, mock}.
 
 %%%_* Tests ============================================================
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
+
 -endif.
 
 %%%_* Emacs ============================================================
