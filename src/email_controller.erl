@@ -45,7 +45,7 @@ start_link() -> gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 init([]) ->
     AdpName    = get_app_env(adapter, ?DEFAULT_ADAPTER),
-    AdpOptions = get_app_env(?DEFAULT_ADAPTER, []),
+    AdpOptions = get_app_env(AdpName, []),
     Adapter    = list_to_atom(lists:concat(["email_adapter_", AdpName])),
     {ok, Conn} = Adapter:start(AdpOptions),
     {ok, #state{ adapter = Adapter, connection = Conn }}.
