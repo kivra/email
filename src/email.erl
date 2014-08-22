@@ -34,7 +34,8 @@
 
 %%%_ * Types -----------------------------------------------------------
 -type email()           :: {binary(), binary()}.
--type message()         :: binary() | {html, binary()} | {text, binary()}.
+-type message_element() :: binary() | {html, binary()} | {text, binary()}.
+-type message()         :: message_element() | list(message_element()).
 -type dirtyemailprim()  :: atom() | list() | binary().
 -type dirtyemail()      :: {dirtyemailprim(), dirtyemailprim()}.
 -type maybedirtyemail() :: email() | dirtyemail() | dirtyemailprim().
@@ -63,9 +64,16 @@ send(To, From, Subject, Message, Options) ->
 sanitize_param({V1, V2}) -> {ensure_binary(V1), ensure_binary(V2)};
 sanitize_param(Val)      -> {ensure_binary(Val), ensure_binary(Val)}.
 
-sanitize_message({html, Msg}) -> {html, ensure_binary(Msg)};
-sanitize_message({text, Msg}) -> {text, ensure_binary(Msg)};
-sanitize_message(Msg)         -> ensure_binary(Msg).
+sanitize_message({html, Msg}) -> [{<<"html">>, ensure_binary(Msg)}];
+sanitize_message({text, Msg}) -> [{<<"text">>, ensure_binary(Msg)}];
+sanitize_message(Msg) when is_list(Msg) ->
+    lists:foldl(fun(Element, Acc) ->
+        case Element of
+            {html, H} -> [{<<"html">>, ensure_binary(H)} | Acc];
+            {text, H} -> [{<<"text">>, ensure_binary(H)} | Acc]
+        end
+    end, [], Msg);
+sanitize_message(Msg)         -> [{<<"text">>, ensure_binary(Msg)}].
 
 ensure_binary(B) when is_binary(B) -> B;
 ensure_binary(L) when is_list(L)   -> list_to_binary(L);

@@ -64,8 +64,9 @@ send(Conn, {ToName, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt) ->
     Body0 = [ {<<"to">>,      <<ToName/binary, $<, ToEmail/binary, $>>>}
             , {<<"from">>,    <<FromName/binary, $<, FromEmail/binary, $>>>}
             , {<<"subject">>, Subject} ],
-    Req   = construct_request(Conn, add_message( lists:merge(Opt, Body0)
-                                               , Message )),
+    Req   = construct_request(Conn, add_message( Message
+                                               , lists:merge(Opt, Body0)
+                                               )),
 
     try httpc:request(post, Req, ?http_options, ?options) of
         {ok, {200, Payload}} -> {ok, Payload};
@@ -76,9 +77,8 @@ send(Conn, {ToName, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt) ->
     end.
 
 %%%_* Private functions ================================================
-add_message(Body, {html, Message}) -> [{<<"html">>, Message} | Body];
-add_message(Body, {text, Message}) -> [{<<"text">>, Message} | Body];
-add_message(Body, Message)         -> add_message(Body, {text, Message}).
+add_message([], Body)    -> Body;
+add_message([H|T], Body) -> add_message(T, [H|Body]).
 
 construct_request(Conn, Body) ->
     { Conn#state.apiurl++"/"++"messages"
