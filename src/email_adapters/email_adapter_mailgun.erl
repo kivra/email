@@ -47,6 +47,7 @@ start()        -> start([]).
 start(Options) ->
     application:start(inets),
     application:start(crypto),
+    application:start(asn1),
     application:start(public_key),
     application:start(ssl),
     Domain = proplists:get_value(domain, Options),
