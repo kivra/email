@@ -24,9 +24,11 @@
 %%%_ * API -------------------------------------------------------------
 -export([send/4]).
 -export([send/5]).
+-export([send/6]).
 
 -export_type([email/0]).
 -export_type([message/0]).
+-export_type([options/0]).
 
 %%%_* Macros ===========================================================
 %% Make sure we time out internally before our clients time out.
@@ -36,6 +38,8 @@
 -type email()           :: {binary(), binary()}.
 -type message_element() :: binary() | {html, binary()} | {text, binary()}.
 -type message()         :: message_element() | list(message_element()).
+-type option()          :: hibernate.
+-type options()         :: [option()].
 -type dirtyemailprim()  :: atom() | list() | binary().
 -type dirtyemail()      :: {dirtyemailprim(), dirtyemailprim()}.
 -type maybedirtyemail() :: email() | dirtyemail() | dirtyemailprim().
@@ -47,16 +51,22 @@
             {ok, term()} | {error, term()}.
 send(To, From, Subject, Message) -> send(To, From, Subject, Message, []).
 
+-spec send(maybedirtyemail(), maybedirtyemail(), binary(), message(), options()) ->
+  {ok, term()} | {error, term()}.
+send(To, From, Subject, Message, Options) -> send(To, From, Subject, Message, Options, []).
+
+
 %% @doc Sends an email and returns ok or error depending on the outcome
--spec send(maybedirtyemail(), maybedirtyemail(), binary(), message(), any()) ->
+-spec send(maybedirtyemail(), maybedirtyemail(), binary(), message(), any(), options()) ->
             {ok, term()} | {error, term()}.
-send(To, From, Subject, Message, Options) ->
+send(To, From, Subject, Message, Options, Params) ->
     gen_server:call( email_controller, { send
                                       , sanitize_param(To)
                                       , sanitize_param(From)
                                       , ensure_binary(Subject)
                                       , sanitize_message(Message)
-                                      , Options }
+                                      , Options
+                                      , Params}
                    , ?TIMEOUT).
 
 %%%_* Private functions ================================================

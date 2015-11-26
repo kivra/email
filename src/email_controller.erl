@@ -50,15 +50,15 @@ init([]) ->
     {ok, Conn} = Adapter:start(AdpOptions),
     {ok, #state{ adapter = Adapter, connection = Conn }}.
 
-handle_call({send, To, From, Subject, Message, Options}, _From, State) ->
-    { reply, (State#state.adapter):send( State#state.connection
-                                      , To
-                                      , From
-                                      , Subject
-                                      , Message
-                                      , Options
-                                      )
-    , State }.
+handle_call({send, To, From, Subject, Message, Options, Params}, _From, State) ->
+  Res = (State#state.adapter):send( State#state.connection
+    , To
+    , From
+    , Subject
+    , Message
+    , Options
+  ),
+  process_params(Res, State, Params).
 
 handle_cast(_Request, State)        -> {noreply, State}.
 terminate(_Reason, State)           -> (State#state.adapter):stop(
@@ -71,6 +71,14 @@ get_app_env(Key, Default) ->
         {ok, Val} -> Val;
         _         -> Default
     end.
+
+
+%% @private
+process_params(Res, State, Params) ->
+  case lists:member(hibernate, Params) of
+    true -> {reply, Res, State, hibernate};
+    false -> {reply, Res, State}
+  end.
 
 %%%_* Tests ============================================================
 -ifdef(TEST).
