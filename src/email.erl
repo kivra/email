@@ -22,9 +22,10 @@
 
 %%%_* Exports ==========================================================
 %%%_ * API -------------------------------------------------------------
--export([send/4]).
+-export([start_link/1, start_link/0]).
 -export([send/5]).
 -export([send/6]).
+-export([send/7]).
 
 -export_type([email/0]).
 -export_type([message/0]).
@@ -46,21 +47,30 @@
 
 %%%_* Code =============================================================
 %%%_ * API -------------------------------------------------------------
-%% @doc Sends an email and returns ok or error depending on the outcome
--spec send(maybedirtyemail(), maybedirtyemail(), binary(), message()) ->
-            {ok, term()} | {error, term()}.
-send(To, From, Subject, Message) -> send(To, From, Subject, Message, []).
 
--spec send(maybedirtyemail(), maybedirtyemail(), binary(), message(), options()) ->
+-spec start_link() -> {ok, pid()} | {error, any()}.
+start_link() -> start_link([]).
+
+-spec start_link(proplists:proplist()) -> {ok, pid()} | {error, any()}.
+start_link(Opts) -> email_controller:start_link(Opts).
+
+%% @doc Sends an email and returns ok or error depending on the outcome
+-spec send(pid(),maybedirtyemail(), maybedirtyemail(), binary(), message()) ->
+            {ok, term()} | {error, term()}.
+send(Controller, To, From, Subject, Message) ->
+  send(Controller, To, From, Subject, Message, []).
+
+-spec send(pid(),maybedirtyemail(), maybedirtyemail(), binary(), message(), options()) ->
   {ok, term()} | {error, term()}.
-send(To, From, Subject, Message, Options) -> send(To, From, Subject, Message, Options, []).
+send(Controller, To, From, Subject, Message, Options) ->
+  send(Controller, To, From, Subject, Message, Options, []).
 
 
 %% @doc Sends an email and returns ok or error depending on the outcome
--spec send(maybedirtyemail(), maybedirtyemail(), binary(), message(), any(), options()) ->
+-spec send(pid(),maybedirtyemail(), maybedirtyemail(), binary(), message(), any(), options()) ->
             {ok, term()} | {error, term()}.
-send(To, From, Subject, Message, Options, Params) ->
-    gen_server:call( email_controller, { send
+send(Controller, To, From, Subject, Message, Options, Params) ->
+    gen_server:call( Controller, { send
                                       , sanitize_param(To)
                                       , sanitize_param(From)
                                       , ensure_binary(Subject)

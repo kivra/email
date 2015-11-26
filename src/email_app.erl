@@ -36,7 +36,8 @@ stop(_State)                  -> ok.
 
 start_stop_test() ->
     ok      = application:start(email),
-    {ok, _} = email:send("e@mail.com", "dev@null.com", "Subj", "Mess"),
+    {ok, Controller} = email:start_link(),
+    {ok, _} = email:send(Controller, "e@mail.com", "dev@null.com", "Subj", "Mess"),
     ok      = application:stop(email).
 
 -endif.
