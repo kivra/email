@@ -67,7 +67,7 @@ send(Controller, To, From, Subject, Message, Options) ->
 
 
 %% @doc Sends an email and returns ok or error depending on the outcome
--spec send(pid(),maybedirtyemail(), maybedirtyemail(), binary(), message(), any(), options()) ->
+-spec send(pid(),maybedirtyemail(), maybedirtyemail(), binary(), message(), options(), any()) ->
             {ok, term()} | {error, term()}.
 send(Controller, To, From, Subject, Message, Options, Params) ->
     gen_server:call( Controller, { send

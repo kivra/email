@@ -41,7 +41,7 @@
         }).
 
 %%%_* Code =============================================================
-start_link(Options) -> gen_server:start_link(?MODULE, [], Options).
+start_link(Options) -> gen_server:start_link(?MODULE, Options, []).
 
 init(Options) ->
     AdpName    = proplists:get_value(adapter, Options, ?DEFAULT_ADAPTER),
@@ -56,9 +56,9 @@ handle_call({send, To, From, Subject, Message, Options, Params}, _From, State) -
     , From
     , Subject
     , Message
-    , Options
+    , Params
   ),
-  process_params(Res, State, Params).
+  process_params(Res, State, Options).
 
 handle_cast(_Request, State)        -> {noreply, State}.
 terminate(_Reason, State)           -> (State#state.adapter):stop(
