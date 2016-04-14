@@ -60,7 +60,7 @@ stop(_Conn)    -> ok.
 
 %% Send directly without email controller.
 send(ApiUrl, ApiKey, To, From, Subject, Message, Opt) ->
-  send(#state{apiurl = ApiUrl, apikey = ApiKey}, {To, To}, {From, From}, Subject, Message, Opt).
+  send(#state{apiurl = ApiUrl, apikey = ApiKey}, To, From, Subject, Message, Opt).
 
 send(Conn, {ToEmail, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt) ->
     send(Conn, {<<>>, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt);
