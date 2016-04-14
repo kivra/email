@@ -26,7 +26,7 @@
 -export([start/0]).
 -export([start/1]).
 -export([stop/1]).
--export([send/6]).
+-export([send/6, send/7]).
 -export([url_encode/1]).
 
 %%%_ * Types -----------------------------------------------------------
@@ -56,6 +56,11 @@ start(Options) ->
     {ok, #state{apiurl=ApiUrl++"/"++Domain, apikey=ApiKey}}.
 
 stop(_Conn)    -> ok.
+
+
+%% Send directly without email controller.
+send(ApiUrl, ApiKey, To, From, Subject, Message, Opt) ->
+  send(#state{apiurl = ApiUrl, apikey = ApiKey}, {To, To}, {From, From}, Subject, Message, Opt).
 
 send(Conn, {ToEmail, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt) ->
     send(Conn, {<<>>, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt);
