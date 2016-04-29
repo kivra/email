@@ -69,8 +69,8 @@ send(Conn, {ToName, ToEmail}, {FromEmail, FromEmail}, Subject, Message, Opt) ->
 send(Conn, {ToName, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt) ->
     Body0 = [ {<<"to">>,      <<ToName/binary, $<, ToEmail/binary, $>>>}
             , {<<"from">>,    <<FromName/binary, $<, FromEmail/binary, $>>>}
-            , {<<"subject">>, Subject} ],
-    Req   = construct_request(Conn, add_message( Message
+    ],
+    Req   = construct_request(Conn, Subject,add_message( Message
                                                , lists:merge(Opt, Body0)
                                                )),
 
@@ -86,11 +86,15 @@ send(Conn, {ToName, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt) ->
 add_message([], Body)    -> Body;
 add_message([H|T], Body) -> add_message(T, [H|Body]).
 
-construct_request(Conn, Body) ->
+construct_request(Conn, Subject,Body) ->
     { Conn#state.apiurl++"/"++"messages"
     , auth_header("api", Conn#state.apikey)
     , "application/x-www-form-urlencoded"
-    , url_encode(Body) }.
+    , add_subject(url_encode(Body), Subject) }.
+
+add_subject(Body, Subject) ->
+  <<Body/binary, <<"&subject=">>/binary,
+    <<"=?utf-8?B?">>/binary, (base64:encode(Subject))/binary, <<"?=">>/binary >>.
 
 auth_header(User, Password) ->
     [{ "Authorization"
@@ -104,14 +108,17 @@ url_encode([{Key, Value} | T], <<"">>) ->
                    , $=, (escape_uri(Value))/binary >>);
 url_encode([{Key, Value} | T], Acc) ->
     url_encode(T, << Acc/binary, $&, (escape_uri(Key))/binary
-                   , $=, (escape_uri(Value))/binary >>).
+                   , $=,  (escape_uri(Value))/binary >>).
 
 escape_uri(S) when is_list(S) ->
+  io:format("encode ~p~n", [S]),
     escape_uri(unicode:characters_to_binary(S), <<>>);
 escape_uri(B) ->
+  io:format("encode ~p~n", [B]),
     escape_uri(B, <<>>).
 
 escape_uri(<<C, Rest/binary>>, Acc) ->
+    io:format("escape_uri ~p ~c~n", [C, C]),
     if  C >= $0, C =< $9 -> escape_uri(Rest, <<Acc/binary, C>>);
         C >= $A, C =< $Z -> escape_uri(Rest, <<Acc/binary, C>>);
         C >= $a, C =< $z -> escape_uri(Rest, <<Acc/binary, C>>);
@@ -124,6 +131,7 @@ escape_uri(<<C, Rest/binary>>, Acc) ->
     end;
 escape_uri(<<>>, Acc) ->
     Acc.
+
 
 tohexl(C) when C < 10 -> $0 + C;
 tohexl(C) when C < 17 -> $a + C - 10.
