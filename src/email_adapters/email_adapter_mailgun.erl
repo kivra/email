@@ -111,14 +111,11 @@ url_encode([{Key, Value} | T], Acc) ->
                    , $=,  (escape_uri(Value))/binary >>).
 
 escape_uri(S) when is_list(S) ->
-  io:format("encode ~p~n", [S]),
     escape_uri(unicode:characters_to_binary(S), <<>>);
 escape_uri(B) ->
-  io:format("encode ~p~n", [B]),
     escape_uri(B, <<>>).
 
 escape_uri(<<C, Rest/binary>>, Acc) ->
-    io:format("escape_uri ~p ~c~n", [C, C]),
     if  C >= $0, C =< $9 -> escape_uri(Rest, <<Acc/binary, C>>);
         C >= $A, C =< $Z -> escape_uri(Rest, <<Acc/binary, C>>);
         C >= $a, C =< $z -> escape_uri(Rest, <<Acc/binary, C>>);
