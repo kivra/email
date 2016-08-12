@@ -66,8 +66,8 @@ send(Conn, {ToEmail, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt) ->
     send(Conn, {<<>>, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt);
 send(Conn, {ToName, ToEmail}, {FromEmail, FromEmail}, Subject, Message, Opt) ->
     send(Conn, {ToName, ToEmail}, {<<>>, FromEmail}, Subject, Message, Opt);
-send(Conn, {ToName, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt) ->
-    Body0 = [ {<<"to">>,      <<ToName/binary, $<, ToEmail/binary, $>>>}
+send(Conn, To, {FromName, FromEmail}, Subject, Message, Opt) ->
+    Body0 = [ {<<"to">>,      form_to(To)}
             , {<<"from">>,    <<FromName/binary, $<, FromEmail/binary, $>>>}
     ],
     Req   = construct_request(Conn, Subject,add_message( Message
@@ -133,9 +133,35 @@ escape_uri(<<>>, Acc) ->
 tohexl(C) when C < 10 -> $0 + C;
 tohexl(C) when C < 17 -> $a + C - 10.
 
+%% @private
+form_to([{ToName, ToEmail}]) ->
+  <<ToName/binary, $<, ToEmail/binary, $>>>;
+form_to(ToList) when is_list(ToList) ->
+  lists:foldl(
+    fun
+      (To, <<>>) ->
+        form_to(To);
+      (To, Acc) ->
+        <<(form_to(To))/binary, <<",">>/binary, Acc/binary>>
+    end, <<>>, ToList);
+form_to({ToName, ToEmail}) ->
+  <<ToName/binary, $<, ToEmail/binary, $>>>.
+
 %%%_* Tests ============================================================
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
+
+form_to_single_test() ->
+  To = form_to({<<"boss">>, <<"boss@gmail.com">>}),
+  ?assertEqual(<<"boss<boss@gmail.com>">>, To).
+
+form_to_one_in_list_test() ->
+  To = form_to([{<<"boss">>, <<"boss@gmail.com">>}]),
+  ?assertEqual(<<"boss<boss@gmail.com>">>, To).
+
+form_to_many_in_list_test() ->
+  To = form_to([{<<"boss">>, <<"boss@gmail.com">>}, {<<"cto">>, <<"cto@gmail.com">>}, {<<"ceo">>, <<"ceo@gmail.com">>}]),
+  ?assertEqual(<<"ceo<ceo@gmail.com>,cto<cto@gmail.com>,boss<boss@gmail.com>">>, To).
 
 -endif.
 
