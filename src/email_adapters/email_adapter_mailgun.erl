@@ -19,7 +19,7 @@
 
 %%%_* Module declaration ===============================================
 -module(email_adapter_mailgun).
--behaviour(email_adapter).
+-behaviour(email_adapter_intf).
 
 %%%_* Exports ==========================================================
 %%%_ * API -------------------------------------------------------------
@@ -164,9 +164,3 @@ form_to_many_in_list_test() ->
   ?assertEqual(<<"ceo<ceo@gmail.com>,cto<cto@gmail.com>,boss<boss@gmail.com>">>, To).
 
 -endif.
-
-%%%_* Emacs ============================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 4
-%%% End:

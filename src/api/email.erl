@@ -98,15 +98,3 @@ sanitize_message(Msg)         -> [{<<"text">>, ensure_binary(Msg)}].
 ensure_binary(B) when is_binary(B) -> B;
 ensure_binary(L) when is_list(L)   -> list_to_binary(L);
 ensure_binary(A) when is_atom(A)   -> ensure_binary(atom_to_list(A)).
-
-%%%_* Tests ============================================================
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
-
--endif.
-
-%%%_* Emacs ============================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 4
-%%% End:

@@ -13,39 +13,31 @@
 %%% ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 %%% OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 %%%
-%%% @doc Email Supervisor
+%%% @doc Email App
 %%% @end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%_* Module declaration ===============================================
--module(email_sup).
--behaviour(supervisor).
+-module(email_app).
+-behaviour(application).
 
 %%%_* Exports ==========================================================
 %%%_ * API -------------------------------------------------------------
--export([start_link/0]).
-%% Supervisor callbacks
--export([init/1]).
-
-%%%_* Macros ===========================================================
-%% Helper macro for declaring children of supervisor
--define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
+-export([start/2, stop/1]).
 
 %%%_* Code =============================================================
 %%%_ * API -------------------------------------------------------------
-start_link() -> supervisor:start_link({local, ?MODULE}, ?MODULE, []).
-
-%% @doc Supervisor callbacks
-init([]) -> {ok, { {one_for_one, 5, 10}, []} }.
+start(_StartType, _StartArgs) -> email_sup:start_link().
+stop(_State)                  -> ok.
 
 %%%_* Tests ============================================================
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 
--endif.
+start_stop_test() ->
+    ok      = application:start(email),
+    {ok, Controller} = email:start_link(),
+    {ok, _} = email:send(Controller, "e@mail.com", "dev@null.com", "Subj", "Mess"),
+    ok      = application:stop(email).
 
-%%%_* Emacs ============================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 4
-%%% End:
+-endif.

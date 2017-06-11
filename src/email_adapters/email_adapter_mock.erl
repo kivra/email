@@ -19,7 +19,7 @@
 
 %%%_* Module declaration ===============================================
 -module(email_adapter_mock).
--behaviour(email_adapter).
+-behaviour(email_adapter_intf).
 
 %%%_* Exports ==========================================================
 %%%_ * API -------------------------------------------------------------
@@ -38,15 +38,3 @@ send(_, {ToName, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt) ->
     io:format("(~p, ~p)-(~p, ~p)~n~p~n~p~n~p"
              , [ToName, ToEmail, FromName, FromEmail, Subject, Message, Opt]),
     {ok, mock}.
-
-%%%_* Tests ============================================================
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
-
--endif.
-
-%%%_* Emacs ============================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 4
-%%% End:

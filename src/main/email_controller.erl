@@ -73,15 +73,3 @@ process_params(Res, State, Params) ->
     true -> {reply, Res, State, hibernate};
     false -> {reply, Res, State}
   end.
-
-%%%_* Tests ============================================================
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
-
--endif.
-
-%%%_* Emacs ============================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 4
-%%% End:

@@ -13,37 +13,27 @@
 %%% ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 %%% OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 %%%
-%%% @doc Email Adapter behavior
+%%% @doc Email Supervisor
 %%% @end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%_* Module declaration ===============================================
--module(email_adapter).
+-module(email_sup).
+-behaviour(supervisor).
 
-%%%_* Behaviour ========================================================
--callback start() -> ok.
+%%%_* Exports ==========================================================
+%%%_ * API -------------------------------------------------------------
+-export([start_link/0]).
+%% Supervisor callbacks
+-export([init/1]).
 
--callback start(Options :: proplists:proplist()) -> ok.
+%%%_* Macros ===========================================================
+%% Helper macro for declaring children of supervisor
+-define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
 
--callback stop(Connection :: any()) -> ok.
+%%%_* Code =============================================================
+%%%_ * API -------------------------------------------------------------
+start_link() -> supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
--callback send(Connection, To, From, Subject, Message, Options) -> {ok, Return}
-                                                        | {error, Return} when
-      Connection :: any(),
-      To         :: email:email(),
-      From       :: email:email(),
-      Subject    :: binary(),
-      Message    :: email:message(),
-      Options    :: any(),
-      Return     :: term().
-
-%%%_* Tests ============================================================
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
--endif.
-
-%%%_* Emacs ============================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 4
-%%% End:
+%% @doc Supervisor callbacks
+init([]) -> {ok, { {one_for_one, 5, 10}, []} }.
