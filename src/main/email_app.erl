@@ -13,37 +13,31 @@
 %%% ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 %%% OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 %%%
-%%% @doc Email Adapter behavior
+%%% @doc Email App
 %%% @end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%_* Module declaration ===============================================
--module(email_adapter).
+-module(email_app).
+-behaviour(application).
 
-%%%_* Behaviour ========================================================
--callback start() -> ok.
+%%%_* Exports ==========================================================
+%%%_ * API -------------------------------------------------------------
+-export([start/2, stop/1]).
 
--callback start(Options :: proplists:proplist()) -> ok.
-
--callback stop(Connection :: any()) -> ok.
-
--callback send(Connection, To, From, Subject, Message, Options) -> {ok, Return}
-                                                        | {error, Return} when
-      Connection :: any(),
-      To         :: email:email(),
-      From       :: email:email(),
-      Subject    :: binary(),
-      Message    :: email:message(),
-      Options    :: any(),
-      Return     :: term().
+%%%_* Code =============================================================
+%%%_ * API -------------------------------------------------------------
+start(_StartType, _StartArgs) -> email_sup:start_link().
+stop(_State)                  -> ok.
 
 %%%_* Tests ============================================================
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
--endif.
 
-%%%_* Emacs ============================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 4
-%%% End:
+start_stop_test() ->
+    ok      = application:start(email),
+    {ok, Controller} = email:start_link(),
+    {ok, _} = email:send(Controller, "e@mail.com", "dev@null.com", "Subj", "Mess"),
+    ok      = application:stop(email).
+
+-endif.

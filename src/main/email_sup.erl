@@ -36,16 +36,4 @@
 start_link() -> supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 %% @doc Supervisor callbacks
-init([]) -> {ok, { {one_for_one, 5, 10}, [?CHILD(email_controller, worker)]} }.
-
-%%%_* Tests ============================================================
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
-
--endif.
-
-%%%_* Emacs ============================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 4
-%%% End:
+init([]) -> {ok, { {one_for_one, 5, 10}, []} }.

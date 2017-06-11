@@ -1,27 +1,18 @@
 email
 =====
 
-Erlang Mail application. Support pluggable backends. Comes default with a mailgun-adapter but adding new adapters is real simple.
+Erlang Mail application. Support pluggable backends. Comes default with a mailgun-adapter but adding new adapters is 
+real simple.
 
 ## Using
 
 ### In Erlang
 
-Include email as a rebar dependency with:
+Include email dependency in your build system, add email application to your app.src to make in start with your app.  
 
-``` erlang
-	{deps, [{email, ".*", {git, "git://github.com/kivra/email.git", "master"}}]}.
-```
+Then you can use it as:
 
-You have to start the email app with `application:start(email)`. Then you can use it as:
-
-``` erlang
-	Erlang R15B01 (erts-5.9.1) [source] [64-bit] [smp:8:8] [async-threads:0] [hipe] [kernel-poll:false]
-
-	Eshell V5.9.1  (abort with ^G)
-	1> application:start(email).
-	ok
-	2> email:send({<<"Silly Wabbit">>, <<"test@youremail.com">>},
+``` email:send({<<"Silly Wabbit">>, <<"test@youremail.com">>},
                   {<<"Funky Chicken">>, <<"me@samples.mailgun.org">>},
                   <<"Test subject">>, <<"test message!! Yihaa.">>).
 	{ok,[{<<"message">>,<<"Queued. Thank you.">>},

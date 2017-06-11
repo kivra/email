@@ -13,36 +13,26 @@
 %%% ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 %%% OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 %%%
-%%% @doc Email App
+%%% @doc Email Adapter behavior
 %%% @end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%_* Module declaration ===============================================
--module(email_app).
--behaviour(application).
+-module(email_adapter_intf).
 
-%%%_* Exports ==========================================================
-%%%_ * API -------------------------------------------------------------
--export([start/2, stop/1]).
+%%%_* Behaviour ========================================================
+-callback start() -> ok.
 
-%%%_* Code =============================================================
-%%%_ * API -------------------------------------------------------------
-start(_StartType, _StartArgs) -> email_sup:start_link().
-stop(_State)                  -> ok.
+-callback start(Options :: proplists:proplist()) -> ok.
 
-%%%_* Tests ============================================================
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
+-callback stop(Connection :: any()) -> ok.
 
-start_stop_test() ->
-    ok      = application:start(email),
-    {ok, _} = email:send("e@mail.com", "dev@null.com", "Subj", "Mess"),
-    ok      = application:stop(email).
-
--endif.
-
-%%%_* Emacs ============================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 4
-%%% End:
+-callback send(Connection, To, From, Subject, Message, Options) -> {ok, Return}
+                                                        | {error, Return} when
+      Connection :: any(),
+      To         :: email:email(),
+      From       :: email:email(),
+      Subject    :: binary(),
+      Message    :: email:message(),
+      Options    :: any(),
+      Return     :: term().

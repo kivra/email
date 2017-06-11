@@ -19,14 +19,14 @@
 
 %%%_* Module declaration ===============================================
 -module(email_adapter_mailgun).
--behaviour(email_adapter).
+-behaviour(email_adapter_intf).
 
 %%%_* Exports ==========================================================
 %%%_ * API -------------------------------------------------------------
 -export([start/0]).
 -export([start/1]).
 -export([stop/1]).
--export([send/6]).
+-export([send/6, send/7]).
 -export([url_encode/1]).
 
 %%%_ * Types -----------------------------------------------------------
@@ -57,15 +57,20 @@ start(Options) ->
 
 stop(_Conn)    -> ok.
 
+
+%% Send directly without email controller.
+send(ApiUrl, ApiKey, To, From, Subject, Message, Opt) ->
+  send(#state{apiurl = ApiUrl, apikey = ApiKey}, To, From, Subject, Message, Opt).
+
 send(Conn, {ToEmail, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt) ->
     send(Conn, {<<>>, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt);
 send(Conn, {ToName, ToEmail}, {FromEmail, FromEmail}, Subject, Message, Opt) ->
     send(Conn, {ToName, ToEmail}, {<<>>, FromEmail}, Subject, Message, Opt);
-send(Conn, {ToName, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt) ->
-    Body0 = [ {<<"to">>,      <<ToName/binary, $<, ToEmail/binary, $>>>}
+send(Conn, To, {FromName, FromEmail}, Subject, Message, Opt) ->
+    Body0 = [ {<<"to">>,      form_to(To)}
             , {<<"from">>,    <<FromName/binary, $<, FromEmail/binary, $>>>}
-            , {<<"subject">>, Subject} ],
-    Req   = construct_request(Conn, add_message( Message
+    ],
+    Req   = construct_request(Conn, Subject,add_message( Message
                                                , lists:merge(Opt, Body0)
                                                )),
 
@@ -81,11 +86,15 @@ send(Conn, {ToName, ToEmail}, {FromName, FromEmail}, Subject, Message, Opt) ->
 add_message([], Body)    -> Body;
 add_message([H|T], Body) -> add_message(T, [H|Body]).
 
-construct_request(Conn, Body) ->
+construct_request(Conn, Subject,Body) ->
     { Conn#state.apiurl++"/"++"messages"
     , auth_header("api", Conn#state.apikey)
     , "application/x-www-form-urlencoded"
-    , url_encode(Body) }.
+    , add_subject(url_encode(Body), Subject) }.
+
+add_subject(Body, Subject) ->
+  <<Body/binary, <<"&subject=">>/binary,
+    <<"=?utf-8?B?">>/binary, (base64:encode(Subject))/binary, <<"?=">>/binary >>.
 
 auth_header(User, Password) ->
     [{ "Authorization"
@@ -99,7 +108,7 @@ url_encode([{Key, Value} | T], <<"">>) ->
                    , $=, (escape_uri(Value))/binary >>);
 url_encode([{Key, Value} | T], Acc) ->
     url_encode(T, << Acc/binary, $&, (escape_uri(Key))/binary
-                   , $=, (escape_uri(Value))/binary >>).
+                   , $=,  (escape_uri(Value))/binary >>).
 
 escape_uri(S) when is_list(S) ->
     escape_uri(unicode:characters_to_binary(S), <<>>);
@@ -120,17 +129,38 @@ escape_uri(<<C, Rest/binary>>, Acc) ->
 escape_uri(<<>>, Acc) ->
     Acc.
 
+
 tohexl(C) when C < 10 -> $0 + C;
 tohexl(C) when C < 17 -> $a + C - 10.
+
+%% @private
+form_to([{ToName, ToEmail}]) ->
+  <<ToName/binary, $<, ToEmail/binary, $>>>;
+form_to(ToList) when is_list(ToList) ->
+  lists:foldl(
+    fun
+      (To, <<>>) ->
+        form_to(To);
+      (To, Acc) ->
+        <<(form_to(To))/binary, <<",">>/binary, Acc/binary>>
+    end, <<>>, ToList);
+form_to({ToName, ToEmail}) ->
+  <<ToName/binary, $<, ToEmail/binary, $>>>.
 
 %%%_* Tests ============================================================
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 
--endif.
+form_to_single_test() ->
+  To = form_to({<<"boss">>, <<"boss@gmail.com">>}),
+  ?assertEqual(<<"boss<boss@gmail.com>">>, To).
 
-%%%_* Emacs ============================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 4
-%%% End:
+form_to_one_in_list_test() ->
+  To = form_to([{<<"boss">>, <<"boss@gmail.com">>}]),
+  ?assertEqual(<<"boss<boss@gmail.com>">>, To).
+
+form_to_many_in_list_test() ->
+  To = form_to([{<<"boss">>, <<"boss@gmail.com">>}, {<<"cto">>, <<"cto@gmail.com">>}, {<<"ceo">>, <<"ceo@gmail.com">>}]),
+  ?assertEqual(<<"ceo<ceo@gmail.com>,cto<cto@gmail.com>,boss<boss@gmail.com>">>, To).
+
+-endif.

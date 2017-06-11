@@ -22,11 +22,14 @@
 
 %%%_* Exports ==========================================================
 %%%_ * API -------------------------------------------------------------
--export([send/4]).
+-export([start_link/1, start_link/0]).
 -export([send/5]).
+-export([send/6]).
+-export([send/7]).
 
 -export_type([email/0]).
 -export_type([message/0]).
+-export_type([options/0]).
 
 %%%_* Macros ===========================================================
 %% Make sure we time out internally before our clients time out.
@@ -36,27 +39,44 @@
 -type email()           :: {binary(), binary()}.
 -type message_element() :: binary() | {html, binary()} | {text, binary()}.
 -type message()         :: message_element() | list(message_element()).
+-type option()          :: hibernate.
+-type options()         :: [option()].
 -type dirtyemailprim()  :: atom() | list() | binary().
 -type dirtyemail()      :: {dirtyemailprim(), dirtyemailprim()}.
 -type maybedirtyemail() :: email() | dirtyemail() | dirtyemailprim().
 
 %%%_* Code =============================================================
 %%%_ * API -------------------------------------------------------------
-%% @doc Sends an email and returns ok or error depending on the outcome
--spec send(maybedirtyemail(), maybedirtyemail(), binary(), message()) ->
-            {ok, term()} | {error, term()}.
-send(To, From, Subject, Message) -> send(To, From, Subject, Message, []).
+
+-spec start_link() -> {ok, pid()} | {error, any()}.
+start_link() -> start_link([]).
+
+-spec start_link(proplists:proplist()) -> {ok, pid()} | {error, any()}.
+start_link(Opts) -> email_controller:start_link(Opts).
 
 %% @doc Sends an email and returns ok or error depending on the outcome
--spec send(maybedirtyemail(), maybedirtyemail(), binary(), message(), any()) ->
+-spec send(pid(),maybedirtyemail(), maybedirtyemail(), binary(), message()) ->
             {ok, term()} | {error, term()}.
-send(To, From, Subject, Message, Options) ->
-    gen_server:call( email_controller, { send
+send(Controller, To, From, Subject, Message) ->
+  send(Controller, To, From, Subject, Message, []).
+
+-spec send(pid(),maybedirtyemail(), maybedirtyemail(), binary(), message(), options()) ->
+  {ok, term()} | {error, term()}.
+send(Controller, To, From, Subject, Message, Options) ->
+  send(Controller, To, From, Subject, Message, Options, []).
+
+
+%% @doc Sends an email and returns ok or error depending on the outcome
+-spec send(pid(),maybedirtyemail(), maybedirtyemail(), binary(), message(), options(), any()) ->
+            {ok, term()} | {error, term()}.
+send(Controller, To, From, Subject, Message, Options, Params) ->
+    gen_server:call( Controller, { send
                                       , sanitize_param(To)
                                       , sanitize_param(From)
                                       , ensure_binary(Subject)
                                       , sanitize_message(Message)
-                                      , Options }
+                                      , Options
+                                      , Params}
                    , ?TIMEOUT).
 
 %%%_* Private functions ================================================
@@ -78,15 +98,3 @@ sanitize_message(Msg)         -> [{<<"text">>, ensure_binary(Msg)}].
 ensure_binary(B) when is_binary(B) -> B;
 ensure_binary(L) when is_list(L)   -> list_to_binary(L);
 ensure_binary(A) when is_atom(A)   -> ensure_binary(atom_to_list(A)).
-
-%%%_* Tests ============================================================
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
-
--endif.
-
-%%%_* Emacs ============================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 4
-%%% End:

@@ -23,7 +23,7 @@
 
 %%%_* Exports ==========================================================
 %%%_ * API -------------------------------------------------------------
--export([start_link/0]).
+-export([start_link/1]).
 -export([init/1]).
 -export([handle_call/3]).
 -export([handle_cast/2]).
@@ -41,24 +41,24 @@
         }).
 
 %%%_* Code =============================================================
-start_link() -> gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+start_link(Options) -> gen_server:start_link(?MODULE, Options, []).
 
-init([]) ->
-    AdpName    = get_app_env(adapter, ?DEFAULT_ADAPTER),
-    AdpOptions = get_app_env(AdpName, []),
+init(Options) ->
+    AdpName    = proplists:get_value(adapter, Options, ?DEFAULT_ADAPTER),
+    AdpOptions = proplists:get_value(AdpName, Options, []),
     Adapter    = list_to_atom(lists:concat(["email_adapter_", AdpName])),
     {ok, Conn} = Adapter:start(AdpOptions),
     {ok, #state{ adapter = Adapter, connection = Conn }}.
 
-handle_call({send, To, From, Subject, Message, Options}, _From, State) ->
-    { reply, (State#state.adapter):send( State#state.connection
-                                      , To
-                                      , From
-                                      , Subject
-                                      , Message
-                                      , Options
-                                      )
-    , State }.
+handle_call({send, To, From, Subject, Message, Options, Params}, _From, State) ->
+  Res = (State#state.adapter):send( State#state.connection
+    , To
+    , From
+    , Subject
+    , Message
+    , Params
+  ),
+  process_params(Res, State, Options).
 
 handle_cast(_Request, State)        -> {noreply, State}.
 terminate(_Reason, State)           -> (State#state.adapter):stop(
@@ -66,20 +66,10 @@ terminate(_Reason, State)           -> (State#state.adapter):stop(
 code_change(_OldVsn, State, _Extra) -> {ok, State}.
 handle_info(_Info, State)           -> {noreply, State}.
 
-get_app_env(Key, Default) ->
-    case application:get_env(email, Key) of
-        {ok, Val} -> Val;
-        _         -> Default
-    end.
 
-%%%_* Tests ============================================================
--ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
-
--endif.
-
-%%%_* Emacs ============================================================
-%%% Local Variables:
-%%% allout-layout: t
-%%% erlang-indent-level: 4
-%%% End:
+%% @private
+process_params(Res, State, Params) ->
+  case lists:member(hibernate, Params) of
+    true -> {reply, Res, State, hibernate};
+    false -> {reply, Res, State}
+  end.
